@@ -7,6 +7,9 @@
 #include "shader.h"
 #include "../include/glad/glad.h"
 #include "../include/GLFW/glfw3.h"
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #define STB_IMAGE_IMPLEMENTATION
 #include "../include/stb_image.h"
 
@@ -141,6 +144,19 @@ int main() {
     shader.use();
     shader.set_int("texture1", 0);
     shader.set_int("texture2", 1);
+
+
+    // vector!!!!
+    glm::vec4 vec(1.0f, 0.0f, 0.0f, 1.0f);
+    glm::mat4 trans = glm::mat4(1.0f);
+    trans = glm::translate(trans, glm::vec3(0.5f, -0.5f, 0.0f));
+    trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));
+    std::cout << vec.x << vec.y << vec.z << std::endl;
+
+    unsigned int transform_loc = glGetUniformLocation(shader.ID, "transform");
+    glUniformMatrix4fv(transform_loc, 1, GL_FALSE, glm::value_ptr(trans));
+
+
 
     while(!glfwWindowShouldClose(state.window)) {
 
