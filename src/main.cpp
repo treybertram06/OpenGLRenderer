@@ -43,6 +43,10 @@ void process_input(GLFWwindow* window) {
         camera.pos -= glm::normalize(glm::cross(camera.front, camera.up)) * camera_speed;
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.pos += glm::normalize(glm::cross(camera.front, camera.up)) * camera_speed;
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+        camera.pos += camera_speed * camera.up;
+    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+        camera.pos -= camera_speed * camera.up;
 }
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
