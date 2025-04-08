@@ -3,16 +3,43 @@ project(OpenGL)
 
 set(CMAKE_CXX_STANDARD 20)
 
+# Include headers
 include_directories(include/GLFW)
 include_directories(include)
 
-link_directories(dependencies/lib-mingw-w64)
+# Platform-specific library paths
+if(APPLE)
+    link_directories(${CMAKE_SOURCE_DIR}/dependencies/lib-arm64)
+elseif(WIN32)
+    link_directories(${CMAKE_SOURCE_DIR}/dependencies/lib-mingw-w64)
+endif()
+
+# Find OpenGL (needed for both platforms)
 find_package(OpenGL REQUIRED)
 
-add_library(glad STATIC src/glad.c
-        include/shader.h)
+# Build glad
+add_library(glad STATIC src/glad.c include/shader.h)
 target_include_directories(glad PUBLIC include)
 
-add_executable(OpenGL src/main.cpp)
+# Build main executable
+add_executable(OpenGL src/main.cpp
+        include/camera.h)
 
-target_link_libraries(OpenGL glfw3 opengl32 glad)
+# Link platform-specific libraries
+if(APPLE)
+    target_link_libraries(OpenGL
+            glfw
+            glad
+            OpenGL::GL
+            "-framework Cocoa"
+            "-framework IOKit"
+            "-framework CoreFoundation"
+            "-framework CoreVideo"
+    )
+elseif(WIN32)
+    target_link_libraries(OpenGL
+            glfw3
+            glad
+            opengl32
+    )
+endif()

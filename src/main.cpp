@@ -10,15 +10,58 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include "camera.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "../include/stb_image.h"
 
 using namespace std;
 
+Camera camera;
+float delta_time = 0.0f;
+float last_frame = 0.0f;
+
+void update_delta_time() {
+    float current_frame = glfwGetTime();
+    delta_time = current_frame - last_frame;
+    last_frame = current_frame;
+}
+
+
 void process_input(GLFWwindow* window) {
+
+
+    float camera_speed = 2.5f * delta_time;
+
+
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        camera.pos += camera_speed * camera.front;
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        camera.pos -= camera_speed * camera.front;
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        camera.pos -= glm::normalize(glm::cross(camera.front, camera.up)) * camera_speed;
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        camera.pos += glm::normalize(glm::cross(camera.front, camera.up)) * camera_speed;
 }
+
+void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
+    Camera* cam = static_cast<Camera*>(glfwGetWindowUserPointer(window));
+    if (cam) {
+        cam->process_mouse_movement(xpos, ypos);
+    }
+}
+
+void scroll_callback(GLFWwindow* window, double xpos, double ypos) {
+    Camera* cam = static_cast<Camera*>(glfwGetWindowUserPointer(window));
+    if (cam) {
+        cam->process_scroll(ypos);
+    }
+}
+
+
+
+
 
 struct State {
     GLFWwindow* window;
@@ -30,7 +73,8 @@ bool initialize(State& state) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-
+    int width = 800;
+    int height = 600;
 
     GLFWwindow* window = glfwCreateWindow(800, 600, "LearnOpenGL", NULL, NULL);
     if (window == NULL) {
@@ -45,11 +89,18 @@ bool initialize(State& state) {
         return false;
     }
 
-    glViewport(0, 0, 800, 600);
+    glfwGetFramebufferSize(window, &width, &height);
+    glViewport(0, 0, width, height);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetWindowUserPointer(window, &camera);
+    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetScrollCallback(window, scroll_callback);
     state.window = window;
 
     return true;
 }
+
+
 
 
 int main() {
@@ -218,11 +269,13 @@ int main() {
 
     glEnable(GL_DEPTH_TEST);
 
-
+    glm::mat4 view;
+    camera.yaw = -90.0f;
 
     while(!glfwWindowShouldClose(state.window)) {
 
         // check inputs
+        update_delta_time();
         process_input(state.window);
 
         // render scene
@@ -243,15 +296,12 @@ int main() {
         int model_loc = glGetUniformLocation(shader.ID, "model");
         glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm::value_ptr(model));
 */
-        glm::mat4 view = glm::mat4(1.0f);
-        // note that we're translating the scene in the reverse direction of where we want to move
-        view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+        view = camera.create_view_matrix();
         int view_loc = glGetUniformLocation(shader.ID, "view");
         glUniformMatrix4fv(view_loc, 1, GL_FALSE, glm::value_ptr(view));
 
 
-        glm::mat4 projection = glm::mat4(1.0f);
-        projection = glm::perspective(glm::radians(60.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+        auto projection = camera.create_projection_matrix();
         int projection_loc = glGetUniformLocation(shader.ID, "projection");
         glUniformMatrix4fv(projection_loc, 1, GL_FALSE, glm::value_ptr(projection));
 
