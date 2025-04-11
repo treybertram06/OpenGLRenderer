@@ -302,8 +302,12 @@ int main() {
 
         model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
-        model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
+        model = glm::scale(model, glm::vec3(0.1f, 0.1f, 0.1f));	// it's a bit too big for our scene, so scale it down
         lighting_shader.set_mat4("model", model);
+        glm::mat3 normal_matrix = glm::transpose(glm::inverse(glm::mat3(model)));
+        lighting_shader.set_mat3("normal_matrix", normal_matrix);
+
+
         backpack.draw(lighting_shader);
 
 

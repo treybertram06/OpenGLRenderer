@@ -45,7 +45,7 @@ struct PointLight {
 #define NR_POINT_LIGHTS 4
 uniform PointLight point_lights[NR_POINT_LIGHTS];
 
-in vec3 normal;
+in vec3 transformed_normal;
 in vec3 frag_pos;
 in vec2 tex_coords;
 
@@ -57,7 +57,7 @@ vec3 calc_point_light(PointLight light, vec3 normal, vec3 frag_pos, vec3 view_di
 
 void main() {
 
-    vec3 norm = normalize(normal);
+    vec3 norm = normalize(transformed_normal);
     vec3 view_dir = normalize(view_pos - frag_pos);
 
     //directional lighting
@@ -65,7 +65,7 @@ void main() {
 
     //point lights
     for (int i = 0; i < NR_POINT_LIGHTS; i++)
-            result += calc_point_light(point_lights[i], normal, frag_pos, view_dir);
+            result += calc_point_light(point_lights[i], norm, frag_pos, view_dir);
 
     //spot light(s?)
 
