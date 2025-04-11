@@ -18,7 +18,8 @@ endif()
 find_package(OpenGL REQUIRED)
 
 # Build glad
-add_library(glad STATIC src/glad.c include/shader.h)
+add_library(glad STATIC src/glad.c include/shader.h
+        include/util_funcs.h)
 target_include_directories(glad PUBLIC include)
 
 # Build main executable
