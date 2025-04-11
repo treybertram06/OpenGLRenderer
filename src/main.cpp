@@ -159,7 +159,18 @@ int main() {
         -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f
     };
 
-
+    glm::vec3 cube_positions[] = {
+        glm::vec3( 0.0f,  0.0f,  0.0f),
+        glm::vec3( 2.0f,  5.0f, -15.0f),
+        glm::vec3(-1.5f, -2.2f, -2.5f),
+        glm::vec3(-3.8f, -2.0f, -12.3f),
+        glm::vec3( 2.4f, -0.4f, -3.5f),
+        glm::vec3(-1.7f,  3.0f, -7.5f),
+        glm::vec3( 1.3f, -2.0f, -2.5f),
+        glm::vec3( 1.5f,  2.0f, -2.5f),
+        glm::vec3( 1.5f,  0.2f, -1.5f),
+        glm::vec3(-1.3f,  1.0f, -1.5f)
+    };
 
 
 
@@ -235,21 +246,28 @@ int main() {
 
         float oscillating_value1 = 2.0f * sin(3*glfwGetTime());
         float oscillating_value2 = 2.0f * cos(3*glfwGetTime());
-        glm::vec3 light_pos(1.2f, oscillating_value2, oscillating_value1);
+        //glm::vec3 light_pos(1.2f, oscillating_value2, oscillating_value1);
+        glm::vec3 light_pos(1.2f, 1.0f, 2.0f);
 
         //draw the cube
         lighting_shader.use();
-        lighting_shader.set_vec3("light_pos", light_pos);
+        //lighting_shader.set_vec3("light_pos", light_pos);
+        //lighting_shader.set_vec3("light.position", light_pos);
+        lighting_shader.set_vec3("light.position", camera.pos);
+        lighting_shader.set_vec3("light.direction", camera.front);
+        lighting_shader.set_float("light.cutoff", glm::cos(glm::radians(12.5f)));
+        lighting_shader.set_float("light.outer_cutoff", glm::cos(glm::radians(17.5f)));
+
         lighting_shader.set_vec3("view_pos", camera.pos);
 
         lighting_shader.set_vec3("light.ambient",  {0.2f, 0.2f, 0.2f});
         lighting_shader.set_vec3("light.diffuse",  {0.5f, 0.5f, 0.5f});
         lighting_shader.set_vec3("light.specular", {1.0f, 1.0f, 1.0f});
+        lighting_shader.set_float("light.constant",  1.0f);
+        lighting_shader.set_float("light.linear",    0.09f);
+        lighting_shader.set_float("light.quadratic", 0.032f);
 
-        lighting_shader.set_vec3("material.specular",{0.5f, 0.5f, 0.5f});
         lighting_shader.set_float("material.shininess", 32.0f);
-
-
 
 
         auto view = camera.create_view_matrix();
@@ -266,7 +284,19 @@ int main() {
         glBindTexture(GL_TEXTURE_2D, specular_map);
 
         glBindVertexArray(cube_VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        for(unsigned int i = 0; i < 10; i++)
+        {
+            glm::mat4 model = glm::mat4(1.0f);
+            model = glm::translate(model, cube_positions[i]);
+            float angle = 20.0f * i;
+            model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+            lighting_shader.set_mat4("model", model);
+
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
+
+
+
 
 
 
@@ -283,6 +313,7 @@ int main() {
 
         glBindVertexArray(light_cube_VAO);
         glDrawArrays(GL_TRIANGLES, 0, 36);
+
 
 
 
