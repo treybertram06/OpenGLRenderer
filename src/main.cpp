@@ -12,6 +12,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include "camera.h"
 #include "util_funcs.h"
+#include "model.h"
 
 
 using namespace std;
@@ -182,6 +183,9 @@ int main() {
     Shader lighting_shader("../src/shaders/lighting.vert", "../src/shaders/lighting.frag");
     Shader light_cube_shader("../src/shaders/lighting.vert", "../src/shaders/light_cube.frag");
 
+    const char* backpack_path = "../assets/backpack/backpack.obj";
+    Model backpack(backpack_path);
+
     unsigned int VBO, cube_VAO;
     glGenVertexArrays(1, &cube_VAO);
     glGenBuffers(1, &VBO);
@@ -258,11 +262,12 @@ int main() {
         lighting_shader.use();
 
         // directional light
+        /*
         lighting_shader.set_vec3("dir_light.direction", {-0.2f, -1.0f, -0.3f});
         lighting_shader.set_vec3("dir_light.ambient", {0.05f, 0.05f, 0.05f});
         lighting_shader.set_vec3("dir_light.diffuse", {0.4f, 0.4f, 0.4f});
         lighting_shader.set_vec3("dir_light.specular", {0.5f, 0.5f, 0.5f});
-
+        */
         lighting_shader.set_float("point_lights[0].constant", 1.0f);
         for (int i = 0; i < 4; i++) {
             // Position
@@ -276,7 +281,7 @@ int main() {
             // Colors
             lighting_shader.set_vec3("point_lights[" + std::to_string(i) + "].ambient", {0.2f, 0.2f, 0.2f});
             lighting_shader.set_vec3("point_lights[" + std::to_string(i) + "].diffuse", {0.5f, 0.5f, 0.5f});
-            lighting_shader.set_vec3("point_lights[" + std::to_string(i) + "].specular",{1.0f, 0.7f, 0.7f});
+            lighting_shader.set_vec3("point_lights[" + std::to_string(i) + "].specular",{1.0f, 1.0f, 1.0f});
         }
 
         lighting_shader.set_vec3("view_pos", camera.pos);
@@ -293,22 +298,14 @@ int main() {
         auto model = glm::mat4(1.0f);
         lighting_shader.set_mat4("model", model);
 
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, diffuse_map);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, specular_map);
 
-        glBindVertexArray(cube_VAO);
-        for(unsigned int i = 0; i < 10; i++)
-        {
-            glm::mat4 model = glm::mat4(1.0f);
-            model = glm::translate(model, cube_positions[i]);
-            float angle = 20.0f * i;
-            model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-            lighting_shader.set_mat4("model", model);
 
-            glDrawArrays(GL_TRIANGLES, 0, 36);
-        }
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
+        model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
+        lighting_shader.set_mat4("model", model);
+        backpack.draw(lighting_shader);
+
 
 
 

@@ -10,6 +10,7 @@ include_directories(include)
 # Platform-specific library paths
 if(APPLE)
     link_directories(${CMAKE_SOURCE_DIR}/dependencies/lib-arm64)
+    link_directories(${CMAKE_SOURCE_DIR}/dependencies/assimp/lib-arm64)
 elseif(WIN32)
     link_directories(${CMAKE_SOURCE_DIR}/dependencies/lib-mingw-w64)
 endif()
@@ -19,7 +20,9 @@ find_package(OpenGL REQUIRED)
 
 # Build glad
 add_library(glad STATIC src/glad.c include/shader.h
-        include/util_funcs.h)
+        include/util_funcs.h
+        include/mesh.h
+        include/model.h)
 target_include_directories(glad PUBLIC include)
 
 # Build main executable
@@ -31,6 +34,7 @@ if(APPLE)
     target_link_libraries(OpenGL
             glfw
             glad
+            assimp
             OpenGL::GL
             "-framework Cocoa"
             "-framework IOKit"
@@ -41,6 +45,7 @@ elseif(WIN32)
     target_link_libraries(OpenGL
             glfw3
             glad
+            assimp
             opengl32
     )
 endif()
