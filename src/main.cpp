@@ -227,7 +227,12 @@ int main() {
 
 
 
-
+    glm::vec3 point_light_positions[] = {
+        glm::vec3( 0.7f,  0.2f,  2.0f),
+        glm::vec3( 2.3f, -3.3f, -4.0f),
+        glm::vec3(-4.0f,  2.0f, -12.0f),
+        glm::vec3( 0.0f,  0.0f, -3.0f)
+    };
 
 
     camera.yaw = -90.0f;
@@ -251,21 +256,31 @@ int main() {
 
         //draw the cube
         lighting_shader.use();
-        //lighting_shader.set_vec3("light_pos", light_pos);
-        //lighting_shader.set_vec3("light.position", light_pos);
-        lighting_shader.set_vec3("light.position", camera.pos);
-        lighting_shader.set_vec3("light.direction", camera.front);
-        lighting_shader.set_float("light.cutoff", glm::cos(glm::radians(12.5f)));
-        lighting_shader.set_float("light.outer_cutoff", glm::cos(glm::radians(17.5f)));
+
+        // directional light
+        lighting_shader.set_vec3("dir_light.direction", {-0.2f, -1.0f, -0.3f});
+        lighting_shader.set_vec3("dir_light.ambient", {0.05f, 0.05f, 0.05f});
+        lighting_shader.set_vec3("dir_light.diffuse", {0.4f, 0.4f, 0.4f});
+        lighting_shader.set_vec3("dir_light.specular", {0.5f, 0.5f, 0.5f});
+
+        lighting_shader.set_float("point_lights[0].constant", 1.0f);
+        for (int i = 0; i < 4; i++) {
+            // Position
+            lighting_shader.set_vec3("point_lights[" + std::to_string(i) + "].position", point_light_positions[i]);
+
+            // Attenuation
+            lighting_shader.set_float("point_lights[" + std::to_string(i) + "].constant", 1.0f);
+            lighting_shader.set_float("point_lights[" + std::to_string(i) + "].linear", 0.09f);
+            lighting_shader.set_float("point_lights[" + std::to_string(i) + "].quadratic", 0.032f);
+
+            // Colors
+            lighting_shader.set_vec3("point_lights[" + std::to_string(i) + "].ambient", {0.2f, 0.2f, 0.2f});
+            lighting_shader.set_vec3("point_lights[" + std::to_string(i) + "].diffuse", {0.5f, 0.5f, 0.5f});
+            lighting_shader.set_vec3("point_lights[" + std::to_string(i) + "].specular",{1.0f, 0.7f, 0.7f});
+        }
 
         lighting_shader.set_vec3("view_pos", camera.pos);
 
-        lighting_shader.set_vec3("light.ambient",  {0.2f, 0.2f, 0.2f});
-        lighting_shader.set_vec3("light.diffuse",  {0.5f, 0.5f, 0.5f});
-        lighting_shader.set_vec3("light.specular", {1.0f, 1.0f, 1.0f});
-        lighting_shader.set_float("light.constant",  1.0f);
-        lighting_shader.set_float("light.linear",    0.09f);
-        lighting_shader.set_float("light.quadratic", 0.032f);
 
         lighting_shader.set_float("material.shininess", 32.0f);
 
@@ -302,17 +317,21 @@ int main() {
 
 
 
-        //draw the light
+        // also draw the lamp object(s)
         light_cube_shader.use();
         light_cube_shader.set_mat4("projection", projection);
         light_cube_shader.set_mat4("view", view);
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, light_pos);
-        model = glm::scale(model, glm::vec3(0.2f));
-        light_cube_shader.set_mat4("model", model);
 
+        // we now draw as many light bulbs as we have point lights.
         glBindVertexArray(light_cube_VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        for (unsigned int i = 0; i < 4; i++)
+        {
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, point_light_positions[i]);
+            model = glm::scale(model, glm::vec3(0.2f)); // Make it a smaller cube
+            light_cube_shader.set_mat4("model", model);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
 
 
 
