@@ -50,6 +50,8 @@ unsigned int load_texture(
             std::cerr << "Unexpected number of channels: " << nrChannels << "\n";
             format = GL_RGB; // fallback
         }
+        //std::cout << "Loaded texture " << path << " with " << nrChannels << " channels." << std::endl;
+
 
         // Upload data to the currently bound texture
         glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0,

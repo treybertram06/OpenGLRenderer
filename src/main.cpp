@@ -20,6 +20,7 @@ using namespace std;
 Camera camera;
 float delta_time = 0.0f;
 float last_frame = 0.0f;
+bool flying = 0;
 
 void update_delta_time() {
     float current_frame = glfwGetTime();
@@ -32,22 +33,48 @@ void process_input(GLFWwindow* window) {
 
 
     float camera_speed = 2.5f * delta_time;
+    float jump_speed = 0.05f;
 
 
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        camera.pos += camera_speed * camera.front;
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        camera.pos -= camera_speed * camera.front;
+    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
+        if (flying) {
+            camera.pos -= camera_speed * camera.up;
+        } else {
+            camera_speed *= 1.5;
+        }
+    }
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+        if (flying) {
+            camera.pos += camera_speed * camera.front;
+        } else {
+            glm::vec3 forward = glm::normalize(glm::vec3(camera.front.x, 0.0f, camera.front.z));
+            camera.pos += forward * camera_speed;
+        }
+    }
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+        if (flying) {
+            camera.pos -= camera_speed * camera.front;
+        } else {
+            glm::vec3 forward = glm::normalize(glm::vec3(camera.front.x, 0.0f, camera.front.z));
+            camera.pos -= forward * camera_speed;
+        }
+    }
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
         camera.pos -= glm::normalize(glm::cross(camera.front, camera.up)) * camera_speed;
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.pos += glm::normalize(glm::cross(camera.front, camera.up)) * camera_speed;
-    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-        camera.pos += camera_speed * camera.up;
-    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-        camera.pos -= camera_speed * camera.up;
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+        if (flying) {
+            camera.pos.y += camera_speed;
+        } else {
+            if (camera.pos.y <= 1.0f)
+                camera.velocity.y += jump_speed;
+        }
+    }
+    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+        flying = !flying;
 }
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
@@ -64,7 +91,19 @@ void scroll_callback(GLFWwindow* window, double xpos, double ypos) {
     }
 }
 
+void process_physics() {
+    glm::vec3 gravity = {0.0f, -0.001f, 0.0f};
 
+    if (!flying) {
+        camera.pos += camera.velocity;
+        camera.velocity += gravity;
+    }
+
+
+    if (camera.pos.y <= 1.0f)
+        camera.velocity.y = 0.0f;
+
+}
 
 
 
@@ -218,18 +257,6 @@ int main() {
     glEnableVertexAttribArray(0);
 
 
-    //textures
-    std::string diffuse_path = "../assets/container2.png";
-    unsigned int diffuse_map = load_texture(diffuse_path.c_str());
-
-    std::string specular_path = "../assets/container2_specular.png";
-    unsigned int specular_map = load_texture(specular_path.c_str());
-
-    lighting_shader.use();
-    lighting_shader.set_int("material.diffuse", 0);
-    lighting_shader.set_int("material.specular", 1);
-
-
 
     glm::vec3 point_light_positions[] = {
         glm::vec3( 0.7f,  0.2f,  2.0f),
@@ -246,6 +273,7 @@ int main() {
         // check inputs
         update_delta_time();
         process_input(state.window);
+        process_physics();
 
         // render scene
         //clear the color buffer
@@ -301,7 +329,7 @@ int main() {
 
 
         model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
+        model = glm::translate(model, glm::vec3(0.0f, 1.0f, 0.0f)); // translate it down so it's at the center of the scene
         model = glm::scale(model, glm::vec3(0.1f, 0.1f, 0.1f));	// it's a bit too big for our scene, so scale it down
         lighting_shader.set_mat4("model", model);
         glm::mat3 normal_matrix = glm::transpose(glm::inverse(glm::mat3(model)));
@@ -309,6 +337,18 @@ int main() {
 
 
         backpack.draw(lighting_shader);
+
+        glBindVertexArray(cube_VAO);
+
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+        model = glm::scale(model, glm::vec3(10.0f, 0.1f, 10.0f));
+        lighting_shader.set_mat4("model", model);
+
+
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+
+
 
 
 
