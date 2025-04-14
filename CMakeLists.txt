@@ -13,6 +13,7 @@ if(APPLE)
     link_directories(${CMAKE_SOURCE_DIR}/dependencies/assimp/lib-arm64)
 elseif(WIN32)
     link_directories(${CMAKE_SOURCE_DIR}/dependencies/lib-mingw-w64)
+    link_directories(${CMAKE_SOURCE_DIR}/dependencies/assimp/Debug)
 endif()
 
 # Find OpenGL (needed for both platforms)
